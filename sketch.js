@@ -1,4 +1,4 @@
-let r, g, b;
+let h, s, b;
 let hspace, vspace;
 let brain;
 let which = "black";
@@ -6,8 +6,8 @@ let chooser;
 let width, height;
 
 function pickColour() {
-  r = random(255);
-  g = random(255);
+  h = random(255);
+  s = random(255);
   b = random(255);
   redraw();
 }
@@ -40,13 +40,13 @@ function setup() {
   vspace = height / 6;
   chooser = new Chooser();
 
-  brain = new NeuralNetwork(3, 3, 2);
+  brain = new NeuralNetwork(3, 10, 2);
 
   for (let i = 0; i < 10000; i++) {
     let r = random(255);
     let g = random(255);
     let b = random(255);
-    let targets = trainColour(r, g, b);
+    let targets = trainColour(r, g, b); // Not meaningful
     let inputs = [r / 255, g / 255, b / 255];
     brain.train(inputs, targets);
   }
@@ -55,7 +55,8 @@ function setup() {
 }
 
 function draw() {
-  background(r, g, b);
+  colorMode(HSB, 100);
+  background(h, s, b);
 
   // Central devision
   let divider = new Divider();
@@ -64,12 +65,22 @@ function draw() {
   noStroke();
   textAlign(CENTER);
 
+
   fill(0);
+  stroke(255);
   text("black", width / 2 - hspace, height / 2);
   fill(255);
+  stroke(0);
   text("white", width / 2 + hspace, height / 2);
+  noStroke();
 
-  let which = colourPredictor(r, g, b);
+  let ans = 'black';
+  if (b >= 127.5) {
+    ans = 'white';
+  }
+  text(ans, width / 2, 100);
+
+  let which = colourPredictor(h, s, b);
   if (which === "black") {
     chooser.display(-hspace);
   } else {
@@ -77,19 +88,25 @@ function draw() {
   }
 }
 
-function mousePressed() {
+function keyPressed() {
   let targets = [];
-  if (mouseX > width / 2) {
+  if (keyCode === LEFT_ARROW) {
     // white side
     targets = [0, 1];
-  } else {
+  }
+  else if (keyCode === RIGHT_ARROW) {
     // black side
     targets = [1, 0];
   }
+  if (targets !== []) {
+    learn(targets);
+  }
+}
 
-  let inputs = [r / 255, g / 255, b / 255];
+function learn(targets) {
+  let inputs = [h / 255, s / 255, b / 255];
   // Supervised learning
-  // brain.train(inputs, targets);
+  brain.train(inputs, targets);
   pickColour();
 }
 
@@ -104,13 +121,13 @@ function windowResized() {
 class Divider {
   constructor() {
     strokeWeight(1);
-    stroke(255)
+    stroke(255);
     line(width / 2, 0, width / 2, height);
     strokeWeight(2);
-    stroke(0)
+    stroke(0);
     line(width / 2 - 2, 0, width / 2 - 2, height);
     strokeWeight(2);
-    stroke(0)
+    stroke(0);
     line(width / 2 + 2, 0, width / 2 + 2, height);
   }
 }
